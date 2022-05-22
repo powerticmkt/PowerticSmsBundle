@@ -1,0 +1,36 @@
+{
+    "name": "powerticmkt/PowerticSmsBundle",
+    "description": "Mautic SMS Plugin",
+    "type": "mautic-plugin",
+    "version": "1.0.0",
+    "config": {
+        "process-timeout": 2000
+    },
+    "keywords": ["mautic", "plugin", "webhook", "sms"],
+    "require": {
+        "php": "^7.3 || ^8.0"
+    },
+    "extra": {
+        "install-directory-name": "PowerticSmsBundle"
+    },
+    "scripts": {
+        "test": [
+            "@phpunit",
+            "@phpstan",
+            "@csfixer"
+        ],
+        "quicktest": [
+            "@unit",
+            "@phpstan",
+            "@csfixer"
+        ],
+        "phpunit": "../../bin/phpunit --bootstrap ../../vendor/autoload.php --configuration phpunit.xml --fail-on-warning --testsuite=all",
+        "unit": "../../bin/phpunit --bootstrap ../../vendor/autoload.php --configuration phpunit.xml --fail-on-warning --testsuite=unit",
+        "functional": "../../bin/phpunit --bootstrap ../../vendor/autoload.php --configuration phpunit.xml --fail-on-warning --testsuite=functional",
+        "coverage": "../../bin/phpunit --bootstrap ../../vendor/autoload.php --configuration phpunit.xml --fail-on-warning --testsuite=all --coverage-text --coverage-html=Tests/Coverage",
+        "codecov": "../../bin/phpunit --bootstrap ../../vendor/autoload.php --configuration phpunit.xml --testsuite=all --coverage-clover=coverage.xml --coverage-text",
+        "phpstan": "../../bin/phpstan analyse --level=6 .",
+        "csfixer": "../../bin/php-cs-fixer fix -v --dry-run --diff . && rm .php_cs.cache",
+        "fixcs": "../../bin/php-cs-fixer fix -v . && rm .php_cs.cache"
+    }
+}

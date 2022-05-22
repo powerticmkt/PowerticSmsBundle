@@ -1,0 +1,37 @@
+dist: trusty
+language: php
+
+php:
+  - 7.2
+  - 7.3
+
+cache:
+  directories:
+    - $HOME/.composer/cache
+
+before_install:
+  - travis_retry composer global require hirak/prestissimo # install dependencies in parallel
+
+before_script:
+  - cd ..
+  - git clone https://github.com/mautic/mautic.git mautic
+  - cd mautic
+  - git checkout 3.x # remove this once M3 is in the master branch.
+  - composer install
+  - mv $TRAVIS_BUILD_DIR plugins
+  - mv plugins/plugin-example plugins/PowerticSmsBundle
+  - cd plugins/PowerticSmsBundle
+  - composer install
+
+script:
+  - composer codecov
+  - bash <(curl -s https://codecov.io/bash)
+
+jobs:
+  include:
+    - stage: test
+      name: PHPSTAN
+      script: composer phpstan
+    -
+      name: CS
+      script: composer csfixer
