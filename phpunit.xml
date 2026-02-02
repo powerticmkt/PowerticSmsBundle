@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!-- http://www.phpunit.de/manual/current/en/appendixes.configuration.html -->
-<phpunit
-    backupGlobals               = "false"
-    backupStaticAttributes      = "false"
-    colors                      = "true"
-    convertErrorsToExceptions   = "true"
-    convertNoticesToExceptions  = "true"
-    convertWarningsToExceptions = "true"
-    processIsolation            = "false"
-    stopOnFailure               = "false"
-    bootstrap                   = "autoload.php" >
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="../../vendor/phpunit/phpunit/phpunit.xsd"
+         backupGlobals="false"
+         colors="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         bootstrap="../../vendor/autoload.php"
+         cacheDirectory=".phpunit.cache">
 
     <testsuites>
         <testsuite name="unit">
@@ -26,20 +22,20 @@
     </testsuites>
 
     <php>
-        <server name="KERNEL_DIR" value="../../app" />
-        <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak" />
+        <server name="KERNEL_DIR" value="../../app"/>
+        <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak"/>
     </php>
 
-    <filter>
-        <whitelist>
-            <directory>*</directory>
-            <exclude>
-                <directory>Config</directory>
-                <directory>Migrations</directory>
-                <directory>Tests</directory>
-                <directory>Translations</directory>
-            </exclude>
-        </whitelist>
-    </filter>
+    <source>
+        <include>
+            <directory>.</directory>
+        </include>
+        <exclude>
+            <directory>Config</directory>
+            <directory>Migrations</directory>
+            <directory>Tests</directory>
+            <directory>Translations</directory>
+        </exclude>
+    </source>
 
 </phpunit>
