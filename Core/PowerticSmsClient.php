@@ -20,8 +20,11 @@ class PowerticSmsClient
 
         $headers = [
             'Content-Type: application/json',
-            'X-API-TOKEN: ' . $this->apikey,
         ];
+
+        if (!empty($this->apikey)) {
+            $headers[] = 'X-API-TOKEN: ' . $this->apikey;
+        }
 
         curl_setopt($curl, CURLOPT_URL, $this->url);
         curl_setopt($curl, CURLOPT_POST, true);

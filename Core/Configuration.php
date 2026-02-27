@@ -182,12 +182,12 @@ class Configuration
 		$this->transportType = $keys['transport_type'] ?? self::TRANSPORT_HTTP;
 
 		if ($this->transportType === self::TRANSPORT_HTTP) {
-			// Validate HTTP configuration
-			if (empty($keys['url']) || empty($keys['apikey'])) {
-				throw new Exception('PowerticSms HTTP configuration not set. Please configure URL and API Key.');
+			// Validate HTTP configuration (URL is required, API Key is optional)
+			if (empty($keys['url'])) {
+				throw new Exception('PowerticSms HTTP configuration not set. Please configure the URL.');
 			}
 			$this->url = $keys['url'];
-			$this->apikey = $keys['apikey'];
+			$this->apikey = !empty($keys['apikey']) ? $keys['apikey'] : null;
 		} elseif ($this->transportType === self::TRANSPORT_RABBITMQ) {
 			// Validate RabbitMQ configuration
 			if (empty($keys['rabbitmq_host']) || empty($keys['rabbitmq_queue'])) {
