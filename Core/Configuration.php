@@ -1,13 +1,6 @@
 <?php
 
-/**
- * @copyright   2022 Powertic. All rights reserved
- * @author      Luiz Eduardo Oliveira Fonseca <luizeof@gmail.com>
- *
- * @link        https://powertic.com
- *
- * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
- */
+declare(strict_types=1);
 
 namespace MauticPlugin\PowerticSmsBundle\Core;
 
@@ -16,84 +9,202 @@ use Mautic\PluginBundle\Helper\IntegrationHelper;
 
 class Configuration
 {
-	/**
-	 * @var IntegrationHelper
-	 */
-	private $integrationHelper;
+	public const TRANSPORT_HTTP = 'http';
+	public const TRANSPORT_RABBITMQ = 'rabbitmq';
+
+	private bool $configured = false;
+
+	// Common
+	private string $transportType = self::TRANSPORT_HTTP;
+
+	// HTTP settings
+	private ?string $url = null;
+	private ?string $apikey = null;
+
+	// RabbitMQ settings
+	private ?string $rabbitmqHost = null;
+	private int $rabbitmqPort = 5672;
+	private ?string $rabbitmqUser = null;
+	private ?string $rabbitmqPassword = null;
+	private string $rabbitmqVhost = '/';
+	private ?string $rabbitmqQueue = null;
+	private ?string $rabbitmqExchange = null;
+	private ?string $rabbitmqRoutingKey = null;
+
+	public function __construct(
+		private IntegrationHelper $integrationHelper,
+	) {}
 
 	/**
-	 * @var string
-	 */
-	private $sendingPhoneNumber;
-
-	/**
-	 * @var string
-	 */
-	private $url;
-
-	/**
-	 * @var string
-	 */
-	private $apikey;
-
-	/**
-	 * @var bool
-	 */
-	private $disableTrackableUrls = true;
-
-	/**
-	 * Configuration constructor.
-	 */
-	public function __construct(IntegrationHelper $integrationHelper)
-	{
-		$this->integrationHelper = $integrationHelper;
-	}
-
-	/**
-	 * @return string
-	 *
 	 * @throws Exception
 	 */
-	public function getUrl()
+	public function getTransportType(): string
 	{
 		$this->setConfiguration();
 
-		return $this->url;
+		return $this->transportType;
 	}
 
 	/**
-	 * @return string
-	 *
+	 * Check if using HTTP transport.
+	 */
+	public function isHttpTransport(): bool
+	{
+		return $this->getTransportType() === self::TRANSPORT_HTTP;
+	}
+
+	/**
+	 * Check if using RabbitMQ transport.
+	 */
+	public function isRabbitMqTransport(): bool
+	{
+		return $this->getTransportType() === self::TRANSPORT_RABBITMQ;
+	}
+
+	/**
 	 * @throws Exception
 	 */
-	public function getApiKey()
+	public function getUrl(): string
 	{
 		$this->setConfiguration();
 
-		return $this->apikey;
+		return $this->url ?? '';
 	}
 
 	/**
 	 * @throws Exception
 	 */
-	private function setConfiguration()
+	public function getApiKey(): string
 	{
-		if ($this->url) {
+		$this->setConfiguration();
+
+		return $this->apikey ?? '';
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function getRabbitMqHost(): string
+	{
+		$this->setConfiguration();
+
+		return $this->rabbitmqHost ?? 'localhost';
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function getRabbitMqPort(): int
+	{
+		$this->setConfiguration();
+
+		return $this->rabbitmqPort;
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function getRabbitMqUser(): string
+	{
+		$this->setConfiguration();
+
+		return $this->rabbitmqUser ?? 'guest';
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function getRabbitMqPassword(): string
+	{
+		$this->setConfiguration();
+
+		return $this->rabbitmqPassword ?? 'guest';
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function getRabbitMqVhost(): string
+	{
+		$this->setConfiguration();
+
+		return $this->rabbitmqVhost;
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function getRabbitMqQueue(): string
+	{
+		$this->setConfiguration();
+
+		return $this->rabbitmqQueue ?? 'sms_messages';
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function getRabbitMqExchange(): string
+	{
+		$this->setConfiguration();
+
+		return $this->rabbitmqExchange ?? '';
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function getRabbitMqRoutingKey(): string
+	{
+		$this->setConfiguration();
+
+		return $this->rabbitmqRoutingKey ?? '';
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	private function setConfiguration(): void
+	{
+		if ($this->configured) {
 			return;
 		}
 
 		$integration = $this->integrationHelper->getIntegrationObject('PowerticSms');
 
 		if (!$integration || !$integration->getIntegrationSettings()->getIsPublished()) {
-			throw new Exception();
+			throw new Exception('PowerticSms integration is not enabled.');
 		}
 
 		$keys = $integration->getDecryptedApiKeys();
-		if (empty($keys['url']) || empty($keys['apikey'])) {
-			throw new Exception("PowerticSms configuration not set.");
+
+		// Transport type (default to HTTP for backward compatibility)
+		$this->transportType = $keys['transport_type'] ?? self::TRANSPORT_HTTP;
+
+		if ($this->transportType === self::TRANSPORT_HTTP) {
+			// Validate HTTP configuration (URL is required, API Key is optional)
+			if (empty($keys['url'])) {
+				throw new Exception('PowerticSms HTTP configuration not set. Please configure the URL.');
+			}
+			$this->url = $keys['url'];
+			$this->apikey = !empty($keys['apikey']) ? $keys['apikey'] : null;
+		} elseif ($this->transportType === self::TRANSPORT_RABBITMQ) {
+			// Validate RabbitMQ configuration
+			if (empty($keys['rabbitmq_host']) || empty($keys['rabbitmq_queue'])) {
+				throw new Exception('PowerticSms RabbitMQ configuration not set. Please configure Host and Queue.');
+			}
+			$this->rabbitmqHost = $keys['rabbitmq_host'];
+			$this->rabbitmqPort = (int) ($keys['rabbitmq_port'] ?? 5672);
+			$this->rabbitmqUser = $keys['rabbitmq_user'] ?? 'guest';
+			$this->rabbitmqPassword = $keys['rabbitmq_password'] ?? 'guest';
+			$this->rabbitmqVhost = $keys['rabbitmq_vhost'] ?? '/';
+			$this->rabbitmqQueue = $keys['rabbitmq_queue'];
+			$this->rabbitmqExchange = $keys['rabbitmq_exchange'] ?? '';
+			$this->rabbitmqRoutingKey = $keys['rabbitmq_routing_key'] ?? '';
+		} else {
+			throw new Exception("Unknown transport type: {$this->transportType}");
 		}
 
-		$this->url = $keys['url'];
-		$this->apikey = $keys['apikey'];
+		$this->configured = true;
 	}
 }
